@@ -1,0 +1,16 @@
+metadata:
+  scenario_id: "SCENARIO-09"
+  name: "ELF Structural Security Discrepancy (W+X Introduced)"
+  description: "Candidate binary compiled with writable and executable section/segment"
+  threat_actor: "Insecure Compiler Flag Omission / Exploit Vector Injection"
+  category: "ELF Binary Security"
+is_negative_control: false
+policy_config:
+  disallow_wx_sections: true
+  block_threshold: 70
+expected_results:
+  expected_decision: "BLOCK"
+  expected_finding_category: "SUSPICIOUS_STRUCTURE"
+  expected_risk_score: 80
+  expected_exit_code: 1
+  expected_audit_event: "VERIFICATION_FAILED"

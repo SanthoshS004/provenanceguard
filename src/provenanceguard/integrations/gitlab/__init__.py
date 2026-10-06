@@ -1,0 +1,3 @@
+"""
+GitLab CI integration module.
+"""

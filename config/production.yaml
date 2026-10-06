@@ -1,0 +1,36 @@
+environment: production
+debug: false
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 8
+
+database:
+  host: "postgres.prod.internal"
+  port: 5432
+  name: "provenanceguard_prod"
+  user: "pg_prod_user"
+  ssl_mode: "verify-full"
+
+redis:
+  host: "redis.prod.internal"
+  port: 6379
+  db: 0
+
+storage:
+  type: "s3"
+  endpoint: "https://s3.us-east-1.amazonaws.com"
+  bucket: "provenanceguard-artifacts-prod"
+  region: "us-east-1"
+  use_ssl: true
+
+security:
+  jwt_algorithm: "RS256"
+  token_expire_minutes: 15
+  fail_closed_default: true
+
+worker:
+  concurrency: 16
+  max_memory_mb: 2048
+  timeout_seconds: 300

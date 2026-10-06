@@ -1,0 +1,16 @@
+metadata:
+  scenario_id: "SCENARIO-05"
+  name: "Dependency Removal with Completeness-Aware Handling"
+  description: "Candidate SBOM strips 3 dependencies to hide transitive components"
+  threat_actor: "Attacker Stripping Reported Transitive Dependencies"
+  category: "Supply Chain & SBOM Security"
+is_negative_control: false
+policy_config:
+  disallow_dependency_changes: true
+  block_threshold: 70
+expected_results:
+  expected_decision: "BLOCK"
+  expected_finding_category: "UNEXPECTED_DEPENDENCY"
+  expected_risk_score: 30
+  expected_exit_code: 1
+  expected_audit_event: "VERIFICATION_FAILED"

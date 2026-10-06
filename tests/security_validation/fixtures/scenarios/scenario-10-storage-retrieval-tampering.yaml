@@ -1,0 +1,16 @@
+metadata:
+  scenario_id: "SCENARIO-10"
+  name: "Storage Retrieval Content Tampering (Filename Preserved)"
+  description: "In-place file payload replaced on object storage keeping same key, producing ZERO_SUBJECT_MATCH on verification"
+  threat_actor: "Unauthorized MinIO/S3 Bucket Modification"
+  category: "Storage Content Integrity"
+is_negative_control: false
+policy_config:
+  require_subject_match: true
+  block_threshold: 70
+expected_results:
+  expected_decision: "BLOCK"
+  expected_finding_category: "PROVENANCE_INVALID"
+  expected_risk_score: 60
+  expected_exit_code: 1
+  expected_audit_event: "VERIFICATION_FAILED"

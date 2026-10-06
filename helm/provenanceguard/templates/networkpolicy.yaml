@@ -1,0 +1,119 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "provenanceguard.fullname" . }}-api-policy
+  labels:
+    app.kubernetes.io/name: {{ include "provenanceguard.name" . }}
+    app.kubernetes.io/component: api
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "provenanceguard.name" . }}
+      app.kubernetes.io/component: api
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # REST API Port 8000: Accessible ONLY from Ingress Controller namespace/pods
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.ingress.namespaceSelector }}
+      ports:
+        - protocol: TCP
+          port: 8000
+    # Metrics Port 9090: Accessible ONLY from Prometheus scraper namespace/pods
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.prometheus.namespaceSelector }}
+      ports:
+        - protocol: TCP
+          port: 9090
+  egress:
+    # DNS Resolution: CoreDNS / kube-dns
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Database, Redis Queue, MinIO Storage
+    - ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 6379
+        - protocol: TCP
+          port: 9000
+    # Outbound HTTPS for Phase 13 OIDC/webhook integrations (SSRF protected at application level)
+    - ports:
+        - protocol: TCP
+          port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "provenanceguard.fullname" . }}-dashboard-policy
+  labels:
+    app.kubernetes.io/name: {{ include "provenanceguard.name" . }}
+    app.kubernetes.io/component: dashboard
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "provenanceguard.name" . }}
+      app.kubernetes.io/component: dashboard
+  policyTypes:
+    - Ingress
+  ingress:
+    # Dashboard Port 8080: Accessible ONLY from Ingress Controller namespace/pods
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.ingress.namespaceSelector }}
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "provenanceguard.fullname" . }}-worker-policy
+  labels:
+    app.kubernetes.io/name: {{ include "provenanceguard.name" . }}
+    app.kubernetes.io/component: worker
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "provenanceguard.name" . }}
+      app.kubernetes.io/component: worker
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Worker Metrics Port 9090: Accessible ONLY from Prometheus scraper namespace/pods
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.prometheus.namespaceSelector }}
+      ports:
+        - protocol: TCP
+          port: 9090
+  egress:
+    # DNS Resolution
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Database, Redis Queue, MinIO Storage
+    - ports:
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 6379
+        - protocol: TCP
+          port: 9000
+    # Outbound HTTPS for Phase 13 webhook delivery (SSRF protected at application level)
+    - ports:
+        - protocol: TCP
+          port: 443

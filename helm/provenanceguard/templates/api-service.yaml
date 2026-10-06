@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "provenanceguard.fullname" . }}-api
+  labels:
+    app.kubernetes.io/name: {{ include "provenanceguard.name" . }}
+    app.kubernetes.io/component: api
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.api.ports.metrics }}"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.api.ports.http }}
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: {{ .Values.api.ports.metrics }}
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    app.kubernetes.io/name: {{ include "provenanceguard.name" . }}
+    app.kubernetes.io/component: api

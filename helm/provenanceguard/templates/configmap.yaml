@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "provenanceguard.fullname" . }}-config
+  labels:
+    app.kubernetes.io/name: {{ include "provenanceguard.name" . }}
+data:
+  PG_ENV: {{ .Values.global.environment | quote }}
+  PG_DB_HOST: "provenanceguard-postgres"
+  PG_DB_PORT: "5432"
+  PG_DB_NAME: "provenanceguard_prod"
+  PG_DB_USER: "provenanceguard_admin"
+  PG_REDIS_HOST: "provenanceguard-redis"
+  PG_REDIS_PORT: "6379"
+  PG_MINIO_ENDPOINT: "http://provenanceguard-minio:9000"
+  PG_MINIO_BUCKET: "provenanceguard-artifacts"

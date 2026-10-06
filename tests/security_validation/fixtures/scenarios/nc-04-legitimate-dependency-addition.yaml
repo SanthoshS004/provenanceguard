@@ -1,0 +1,17 @@
+metadata:
+  scenario_id: "NC-04"
+  name: "Legitimate Dependency Addition Under Permissive Policy"
+  description: "Candidate SBOM adds 1 new open-source package under permissive policy disallow_unexpected_dependencies=false"
+  threat_actor: "N/A (Developer Approved Addition)"
+  category: "Baseline Controls"
+is_negative_control: true
+policy_config:
+  warning_threshold: 20
+  block_threshold: 70
+  disallow_unexpected_dependencies: false
+expected_results:
+  expected_decision: "PASS_WITH_WARNING"
+  expected_finding_category: "UNEXPECTED_DEPENDENCY"
+  expected_risk_score: 20
+  expected_exit_code: 0
+  expected_audit_event: "VERIFICATION_COMPLETED_WITH_WARNINGS"

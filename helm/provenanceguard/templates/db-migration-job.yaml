@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "provenanceguard.fullname" . }}-db-migration
+  labels:
+    app.kubernetes.io/name: {{ include "provenanceguard.name" . }}
+    app.kubernetes.io/component: db-migration
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    metadata:
+      name: {{ include "provenanceguard.fullname" . }}-db-migration
+      labels:
+        app.kubernetes.io/name: {{ include "provenanceguard.name" . }}
+        app.kubernetes.io/component: db-migration
+    spec:
+      serviceAccountName: {{ default (include "provenanceguard.fullname" .) .Values.serviceAccount.name }}
+      restartPolicy: OnFailure
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: db-migration
+          image: "{{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}"
+          imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          command: ["alembic", "upgrade", "head"]
+          envFrom:
+            - configMapRef:
+                name: {{ include "provenanceguard.fullname" . }}-config
+          env:
+            - name: PG_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "provenanceguard.secretName" . }}
+                  key: PG_DB_PASSWORD
+          volumeMounts:
+            - name: tmp-volume
+              mountPath: /tmp
+      volumes:
+        - name: tmp-volume
+          emptyDir: {}

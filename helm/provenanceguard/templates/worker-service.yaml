@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "provenanceguard.fullname" . }}-worker-metrics
+  labels:
+    app.kubernetes.io/name: {{ include "provenanceguard.name" . }}
+    app.kubernetes.io/component: worker
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.worker.ports.metrics }}"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.worker.ports.metrics }}
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    app.kubernetes.io/name: {{ include "provenanceguard.name" . }}
+    app.kubernetes.io/component: worker

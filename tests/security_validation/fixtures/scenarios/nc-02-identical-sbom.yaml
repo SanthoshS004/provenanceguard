@@ -1,0 +1,15 @@
+metadata:
+  scenario_id: "NC-02"
+  name: "Identical SBOM Baseline Comparison"
+  description: "Candidate SBOM matches baseline dependency package inventory identically"
+  threat_actor: "N/A (Unmodified Dependency Tree)"
+  category: "Baseline Controls"
+is_negative_control: true
+policy_config:
+  warning_threshold: 30
+  block_threshold: 70
+expected_results:
+  expected_decision: "PASS"
+  expected_risk_score: 0
+  expected_exit_code: 0
+  expected_audit_event: "VERIFICATION_COMPLETED"

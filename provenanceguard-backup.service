@@ -1,0 +1,12 @@
+[Unit]
+Description=ProvenanceGuard Automated Database & MinIO Storage Backup
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/provenanceguard
+ExecStart=/bin/bash /opt/provenanceguard/backup_provenanceguard.sh
+
+[Install]
+WantedBy=multi-user.target

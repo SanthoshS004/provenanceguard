@@ -1,0 +1,21 @@
+worker:
+  queue_name: "provenanceguard-analysis"
+  concurrency: 4
+  max_memory_mb: 2048
+  timeout_seconds: 300
+  unprivileged_user: "nobody"
+  unprivileged_uid: 10001
+  unprivileged_gid: 10001
+  mount_docker_socket: false
+
+analyzers:
+  elf:
+    enabled: true
+    max_symbol_count: 50000
+    extract_machine_code: true
+  container:
+    enabled: true
+    max_layer_count: 50
+  sbom:
+    enabled: true
+    supported_formats: ["spdx_json", "cyclonedx_json"]

@@ -1,0 +1,3 @@
+name: valid-policy
+warning_threshold: 50
+block_threshold: 80

@@ -1,0 +1,36 @@
+environment: development
+debug: true
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 1
+
+database:
+  host: "localhost"
+  port: 5432
+  name: "provenanceguard_dev"
+  user: "provenanceguard_admin"
+  ssl_mode: "disable"
+
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+
+storage:
+  type: "minio"
+  endpoint: "http://localhost:9000"
+  bucket: "provenanceguard-artifacts-dev"
+  region: "us-east-1"
+  use_ssl: false
+
+security:
+  jwt_algorithm: "HS256"
+  token_expire_minutes: 60
+  fail_closed_default: false
+
+worker:
+  concurrency: 2
+  max_memory_mb: 2048
+  timeout_seconds: 300

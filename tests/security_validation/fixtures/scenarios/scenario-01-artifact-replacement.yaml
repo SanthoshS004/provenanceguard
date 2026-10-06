@@ -1,0 +1,16 @@
+metadata:
+  scenario_id: "SCENARIO-01"
+  name: "Artifact Replacement / SHA-256 Subject Mismatch"
+  description: "Candidate binary hash does not match SLSA provenance statement subject digest (ZERO_SUBJECT_MATCH)"
+  threat_actor: "Compromised CI Pipeline Stage"
+  category: "Provenance & Attestation Security"
+is_negative_control: false
+policy_config:
+  require_subject_match: true
+  block_threshold: 70
+expected_results:
+  expected_decision: "BLOCK"
+  expected_finding_category: "PROVENANCE_INVALID"
+  expected_risk_score: 60
+  expected_exit_code: 1
+  expected_audit_event: "VERIFICATION_FAILED"

@@ -1,0 +1,42 @@
+name: ProvenanceGuard Supply-Chain Verification
+
+on:
+  push:
+    branches:
+      - main
+      - release/*
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-verify:
+    name: Build & Verify Artifact
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build Software Artifact
+        run: |
+          echo "Building production artifact..."
+          mkdir -p dist
+          echo -e "\x7fELF\x02\x01\x01\x00ProductionBuildPayload" > dist/app.bin
+
+      - name: Execute ProvenanceGuard Zero-Trust Verification
+        env:
+          PROVENANCEGUARD_URL: ${{ secrets.PROVENANCEGUARD_URL || 'https://provenanceguard.example.com' }}
+          PROVENANCEGUARD_API_KEY: ${{ secrets.PROVENANCEGUARD_API_KEY }}
+          PG_API_URL: ${{ secrets.PROVENANCEGUARD_URL || secrets.PG_API_URL }}
+          PG_API_KEY: ${{ secrets.PROVENANCEGUARD_API_KEY || secrets.PG_API_KEY }}
+          PG_PROJECT_ID: ${{ secrets.PG_PROJECT_ID }}
+          PG_ARTIFACT_PATH: "dist/app.bin"
+          PG_VERSION: "1.1.0"
+        run: |
+          python -m provenanceguard.integrations.github.ci_action

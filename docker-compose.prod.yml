@@ -1,0 +1,217 @@
+version: '3.8'
+
+services:
+  caddy:
+    image: caddy:2.7.6-alpine
+    container_name: provenanceguard-prod-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - provenanceguard_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      dashboard:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16.4-alpine
+    container_name: provenanceguard-prod-postgres
+    environment:
+      POSTGRES_USER: ${PG_DB_USER:-provenanceguard_admin}
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      POSTGRES_DB: ${PG_DB_NAME:-provenanceguard_prod}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    networks:
+      - provenanceguard_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_DB_USER:-provenanceguard_admin} -d ${PG_DB_NAME:-provenanceguard_prod}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    secrets:
+      - db_password
+
+  redis:
+    image: redis:7.2.5-alpine
+    container_name: provenanceguard-prod-redis
+    ports:
+      - "127.0.0.1:6379:6379"
+    networks:
+      - provenanceguard_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:RELEASE.2024-03-21T23-13-43Z
+    container_name: provenanceguard-prod-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${PG_MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${PG_MINIO_SECRET_KEY:-minioadminpassword}
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - minio_prod_data:/data
+    networks:
+      - provenanceguard_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9000/minio/health/live')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: provenanceguard-prod-api
+    ports:
+      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:9090:9090"
+    environment:
+      PG_ENV: production
+      PG_DB_HOST: postgres
+      PG_DB_PORT: 5432
+      PG_DB_NAME: ${PG_DB_NAME:-provenanceguard_prod}
+      PG_DB_USER: ${PG_DB_USER:-provenanceguard_admin}
+      PG_DB_PASSWORD_FILE: /run/secrets/db_password
+      PG_REDIS_HOST: redis
+      PG_REDIS_PORT: 6379
+      PG_REDIS_PASSWORD: ${PG_REDIS_PASSWORD:-}
+      PG_MINIO_ENDPOINT: http://minio:9000
+      PG_MINIO_ACCESS_KEY: ${PG_MINIO_ACCESS_KEY:-minioadmin}
+      PG_MINIO_SECRET_KEY: ${PG_MINIO_SECRET_KEY:-minioadminpassword}
+      PG_MINIO_BUCKET: ${PG_MINIO_BUCKET:-provenanceguard-artifacts}
+      PG_JWT_PUBLIC_KEY: ${PG_JWT_PUBLIC_KEY:-}
+      PG_WEBHOOK_ENCRYPTION_KEY_V1: ${PG_WEBHOOK_ENCRYPTION_KEY_V1:-}
+      PG_CORS_ALLOWED_ORIGINS: ${PG_CORS_ALLOWED_ORIGINS:-}
+      ENABLE_DEV_TOKEN_ISSUANCE: ${ENABLE_DEV_TOKEN_ISSUANCE:-false}
+    networks:
+      - provenanceguard_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    secrets:
+      - db_password
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    container_name: provenanceguard-prod-worker
+    user: "10001:10001"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=512m
+    environment:
+      PG_ENV: production
+      PG_DB_HOST: postgres
+      PG_DB_PORT: 5432
+      PG_DB_NAME: ${PG_DB_NAME:-provenanceguard_prod}
+      PG_DB_USER: ${PG_DB_USER:-provenanceguard_admin}
+      PG_DB_PASSWORD_FILE: /run/secrets/db_password
+      PG_REDIS_HOST: redis
+      PG_REDIS_PORT: 6379
+      PG_REDIS_PASSWORD: ${PG_REDIS_PASSWORD:-}
+      PG_MINIO_ENDPOINT: http://minio:9000
+      PG_MINIO_ACCESS_KEY: ${PG_MINIO_ACCESS_KEY:-minioadmin}
+      PG_MINIO_SECRET_KEY: ${PG_MINIO_SECRET_KEY:-minioadminpassword}
+      PG_MINIO_BUCKET: ${PG_MINIO_BUCKET:-provenanceguard-artifacts}
+    networks:
+      - provenanceguard_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    depends_on:
+      redis:
+        condition: service_healthy
+    secrets:
+      - db_password
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dashboard
+    container_name: provenanceguard-prod-dashboard
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks:
+      - provenanceguard_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:8080/ || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+
+volumes:
+  postgres_prod_data:
+  minio_prod_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  provenanceguard_net:
+    driver: bridge

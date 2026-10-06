@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /$
+Disallow: /app/
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /admin/
+
+Sitemap: https://provenanceguard.example.com/sitemap.xml

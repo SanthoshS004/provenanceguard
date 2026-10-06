@@ -1,0 +1,36 @@
+environment: staging
+debug: false
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4
+
+database:
+  host: "postgres.staging.internal"
+  port: 5432
+  name: "provenanceguard_staging"
+  user: "provenanceguard_admin"
+  ssl_mode: "require"
+
+redis:
+  host: "redis.staging.internal"
+  port: 6379
+  db: 0
+
+storage:
+  type: "s3"
+  endpoint: "https://s3.us-west-2.amazonaws.com"
+  bucket: "provenanceguard-artifacts-staging"
+  region: "us-west-2"
+  use_ssl: true
+
+security:
+  jwt_algorithm: "RS256"
+  token_expire_minutes: 30
+  fail_closed_default: true
+
+worker:
+  concurrency: 8
+  max_memory_mb: 2048
+  timeout_seconds: 300

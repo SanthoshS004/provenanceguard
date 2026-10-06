@@ -1,0 +1,73 @@
+name: ProvenanceGuard Supply-Chain Verification CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-and-verify:
+    name: Build & Verify Artifact
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Build Software Artifact
+        run: |
+          echo "Building binary release package..."
+          mkdir -p dist
+          echo "PROVENANCEGUARD_COMPILED_BINARY_HEADER" > dist/app-release-v1.0.0.bin
+          ls -la dist/
+
+      - name: Upload Build Artifact to GitHub Actions Storage
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-v1.0.0.bin
+          path: dist/app-release-v1.0.0.bin
+
+      - name: Calculate Server-Authoritative SHA-256 Digest
+        id: digest
+        run: |
+          SHA256=$(sha256sum dist/app-release-v1.0.0.bin | awk '{print $1}')
+          echo "SHA256_DIGEST=$SHA256" >> $GITHUB_OUTPUT
+          echo "Calculated SHA-256: $SHA256"
+
+      - name: Submit Build Artifact to ProvenanceGuard Verification Gateway
+        env:
+          PG_API_URL: ${{ secrets.PROVENANCEGUARD_URL || 'http://127.0.0.1:8000' }}
+          PG_API_KEY: ${{ secrets.PROVENANCEGUARD_API_KEY }}
+        run: |
+          if [ -z "$PG_API_KEY" ]; then
+            echo "::error::Required secret 'PROVENANCEGUARD_API_KEY' is missing."
+            exit 1
+          fi
+
+          echo "Submitting artifact and Git metadata to ProvenanceGuard API Gateway..."
+          RESPONSE=$(curl -s -X POST "$PG_API_URL/api/v1/ci/github/artifacts" \
+            -H "X-API-Key: $PG_API_KEY" \
+            -F "file=@dist/app-release-v1.0.0.bin" \
+            -F "name=app-release-v1.0.0.bin" \
+            -F "version=1.0.0" \
+            -F "repository=$GITHUB_REPOSITORY" \
+            -F "branch=$GITHUB_REF_NAME" \
+            -F "commit_sha=$GITHUB_SHA" \
+            -F "workflow_run_id=$GITHUB_RUN_ID" \
+            -F "workflow_name=$GITHUB_WORKFLOW" \
+            -F "build_number=$GITHUB_RUN_NUMBER" \
+            -F "artifact_type=BUILD_ARTIFACT")
+
+          echo "Response: $RESPONSE"
+          RUN_ID=$(echo "$RESPONSE" | grep -o '"verification_run_id":"[^"]*' | cut -d'"' -f4)
+
+          if [ -z "$RUN_ID" ]; then
+            echo "::error::Failed to queue verification run."
+            exit 1
+          fi
+
+          echo "Verification Run queued: $RUN_ID"

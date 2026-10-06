@@ -1,0 +1,17 @@
+metadata:
+  scenario_id: "SCENARIO-06"
+  name: "Forged / Invalid DSSE Attestation Envelope Signature"
+  description: "DSSE attestation envelope signature bytes corrupted or unverified"
+  threat_actor: "Forged Attestation Envelope Generator"
+  category: "Attestation Cryptography"
+is_negative_control: false
+policy_config:
+  require_valid_signature: true
+  warning_threshold: 30
+  block_threshold: 70
+expected_results:
+  expected_decision: "BLOCK"
+  expected_finding_category: "SIGNATURE_INVALID"
+  expected_risk_score: 50
+  expected_exit_code: 1
+  expected_audit_event: "VERIFICATION_FAILED"

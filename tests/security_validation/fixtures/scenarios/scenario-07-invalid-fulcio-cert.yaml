@@ -1,0 +1,16 @@
+metadata:
+  scenario_id: "SCENARIO-07"
+  name: "Invalid Sigstore / Fulcio Certificate Chain (DSSE Signature Valid)"
+  description: "Fulcio certificate chain verification fails while DSSE signature itself is valid (no double counting)"
+  threat_actor: "MITM Key Forgery / Self-Signed Fulcio Chain"
+  category: "Sigstore PKI & Identity"
+is_negative_control: false
+policy_config:
+  warning_threshold: 30
+  block_threshold: 50
+expected_results:
+  expected_decision: "BLOCK"
+  expected_finding_category: "SIGNATURE_INVALID"
+  expected_risk_score: 50
+  expected_exit_code: 1
+  expected_audit_event: "VERIFICATION_FAILED"

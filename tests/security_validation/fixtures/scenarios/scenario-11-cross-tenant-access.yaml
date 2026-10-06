@@ -1,0 +1,13 @@
+metadata:
+  scenario_id: "SCENARIO-11"
+  name: "Cross-Tenant Header Spoofing & Authorization Attack"
+  description: "Authenticated user from Tenant A attempts cross-tenant resource lookup with spoofed X-Organization-ID header"
+  threat_actor: "Malicious Authenticated Multi-Tenant User"
+  category: "Access & Authorization Security"
+is_negative_control: false
+expected_results:
+  expected_decision: "N/A"
+  expected_exit_code: 1
+  expected_http_status_get: 404
+  expected_http_status_post: 403
+  expected_audit_event: "UNAUTHORIZED_TENANT_ACCESS_ATTEMPT"

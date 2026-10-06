@@ -1,0 +1,16 @@
+metadata:
+  scenario_id: "SCENARIO-02"
+  name: "Modified Build Output (Function Byte Mutation)"
+  description: "Injected compiler wrapper modifying binary .text code section bytes in 3 function symbols"
+  threat_actor: "Injected Compiler Toolchain Wrapper"
+  category: "Binary Integrity Security"
+is_negative_control: false
+policy_config:
+  warning_threshold: 30
+  block_threshold: 70
+expected_results:
+  expected_decision: "BLOCK"
+  expected_finding_category: "SUSPICIOUS_STRUCTURE"
+  expected_risk_score: 75
+  expected_exit_code: 1
+  expected_audit_event: "VERIFICATION_FAILED"

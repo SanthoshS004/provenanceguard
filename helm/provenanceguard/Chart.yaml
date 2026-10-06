@@ -1,0 +1,17 @@
+apiVersion: v2
+name: provenanceguard
+description: Enterprise Zero-Trust Software Supply-Chain Verification & Observability Platform
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - security
+  - supply-chain
+  - slsa
+  - in-toto
+  - cosign
+  - zero-trust
+home: https://provenanceguard.internal
+maintainers:
+  - name: ProvenanceGuard Team
+    email: security@provenanceguard.internal

@@ -1,0 +1,47 @@
+# Caddyfile for ProvenanceGuard Public Production Deployment
+# Internal Docker Compose container networking uses service names: api:8000 and dashboard:8080
+
+provenanceguard.example.com {
+    # Security Response Headers
+    header {
+        Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none';"
+    }
+
+    # FastAPI REST Gateway Proxy (Container Service Name: api:8000)
+    handle /api/* {
+        reverse_proxy api:8000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Health Diagnostic Probe Proxy (Container Service Name: api:8000)
+    handle /health* {
+        reverse_proxy api:8000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # React SPA Dashboard Proxy (Container Service Name: dashboard:8080)
+    handle {
+        reverse_proxy dashboard:8080 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # Enable Gzip and Zstandard Response Compression
+    encode zstd gzip
+}
